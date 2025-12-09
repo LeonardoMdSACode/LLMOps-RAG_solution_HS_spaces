@@ -1,0 +1,59 @@
+name: Deploy HF Space (Free-tier LLMOps RAG)
+
+# Trigger on push to main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy Hugging Face Space
+    runs-on: ubuntu-latest
+
+    steps:
+      # ------------------------------
+      # 1. Checkout repo
+      # ------------------------------
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # ------------------------------
+      # 2. Setup Python
+      # ------------------------------
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # ------------------------------
+      # 3. Install dependencies
+      # ------------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ------------------------------
+      # 4. Download free models
+      # ------------------------------
+      - name: Download models
+        run: |
+          python scripts/download_models.py
+
+      # ------------------------------
+      # 5. Optional: Test FastAPI locally
+      # ------------------------------
+      #- name: Run tests
+      #  run: pytest tests/
+
+      # ------------------------------
+      # 6. Deploy to Hugging Face Space
+      # ------------------------------
+      - name: Deploy to HF Space
+        uses: huggingface/spaces-deploy-action@main
+        with:
+          space-id: LeonardoMdSA/LLMOps-RAG-Free
+          repo-type: space
+          # token with write access (can use secrets.HF_TOKEN)
+          hf-token: ${{ secrets.HF_TOKEN }}
