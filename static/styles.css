@@ -14,11 +14,12 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 
 .messages { height: 420px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; overflow: auto; background: rgba(0,0,0,0.02); }
 .bubble { max-width: 80%; padding: 10px 12px; margin: 8px 0; border-radius: 12px; white-space: pre-wrap; }
-.bubble.user { margin-left: auto; background: #4f46e5; color: white; }
-.bubble.assistant { margin-right: auto; background: #e5e7eb; color: #111827; }
+
+/* Updated colors */
+.bubble.user { margin-left: auto; background: #1E90FF; color: #111827; } 
+.bubble.assistant { margin-right: auto; background: #6B0000; color: white; }
 
 .composer { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
 #message-input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
 
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #111827; color: white; padding: 8px 12px; border-radius: 6px; opacity: 0; transition: opacity .3s; }
-

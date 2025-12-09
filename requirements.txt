@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+gradio
+sentence-transformers
+PyPDF2
+numpy
+PyYAML
+requests
+tqdm
+faiss-cpu
+llama-cpp-python

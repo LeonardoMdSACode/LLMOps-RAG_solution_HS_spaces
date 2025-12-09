@@ -1,126 +1,95 @@
 """
-rag_service.py
------------------------------------------
-Free-tier RAG service for LLMOps project.
-Uses only:
-- Local LLM via llama-cpp-python
-- SentenceTransformers embeddings
-- FAISS vector store
-No cloud, no API keys, fully free
+multi_doc_chat/rag_service.py
+RAG service using ModelLoader, FAISS, and local embeddings.
 """
 
 from pathlib import Path
 from typing import List, Optional
-import os
-import pickle
+import numpy as np
+import yaml
 
 from .model_loader import ModelLoader
 
-# --------------------------------------------------------------
-# RAG SERVICE CLASS
-# --------------------------------------------------------------
+try:
+    import faiss
+except Exception:
+    faiss = None
+
+# load config
+CFG_PATH = Path(__file__).resolve().parent.parent / "configs" / "default.yaml"
+if CFG_PATH.exists():
+    with open(CFG_PATH, "r") as f:
+        _CFG = yaml.safe_load(f)
+else:
+    _CFG = {"faiss_dir": "faiss_index"}
+
 class RAGService:
-    """
-    Handles:
-      1. Document ingestion
-      2. FAISS index management
-      3. Querying and answer generation via ModelLoader
-    """
-
-    def __init__(self,
-                 model_loader: Optional[ModelLoader] = None,
-                 faiss_dir: str = "faiss_index"):
-        self.faiss_dir = Path(faiss_dir)
-        self.faiss_dir.mkdir(exist_ok=True)
+    def __init__(self, model_loader: Optional[ModelLoader] = None, faiss_dir: Optional[str] = None):
+        cfg_faiss = faiss_dir or _CFG.get("faiss_dir", "faiss_index")
+        self.faiss_dir = Path(cfg_faiss)
+        self.faiss_dir.mkdir(parents=True, exist_ok=True)
         self.loader = model_loader or ModelLoader(faiss_dir=str(self.faiss_dir))
-        self.documents = self.loader.documents  # original text chunks
+        self.documents: List[str] = self.loader.documents or []
+        self.index = None
+        if faiss:
+            self._try_load_index()
 
-    # --------------------------------------------------------------
-    # INGEST DOCUMENTS
-    # --------------------------------------------------------------
+    def _try_load_index(self):
+        idx_path = self.faiss_dir / "index.bin"
+        docs_path = self.faiss_dir / "docs.txt"
+        if idx_path.exists() and faiss:
+            self.index = faiss.read_index(str(idx_path))
+            if docs_path.exists():
+                with open(docs_path, "r", encoding="utf-8") as f:
+                    self.documents = [line.rstrip("\n") for line in f.readlines()]
+
     def ingest_documents(self, texts: List[str]):
-        """
-        Split and store documents, generate embeddings, and update FAISS index.
-        """
         if not texts:
             return
-
-        # append new docs
+        # extend docs
+        start_index = len(self.documents)
         self.documents.extend(texts)
 
-        if not self.loader.embedder:
+        if self.loader.embedder is None:
             raise RuntimeError("Embedding model not loaded.")
 
-        # compute embeddings
         embeddings = self.loader.embed(texts).astype("float32")
+        if faiss is None:
+            raise RuntimeError("faiss not available (install faiss-cpu)")
 
-        # init / update FAISS index
-        if self.loader.index is None:
-            import faiss
+        if self.index is None:
             dim = embeddings.shape[1]
-            self.loader.index = faiss.IndexFlatL2(dim)
+            self.index = faiss.IndexFlatL2(dim)
 
-        self.loader.index.add(embeddings)
-
-        # save FAISS index and documents
-        self._save_index()
-
-    # --------------------------------------------------------------
-    # QUERY / CHAT
-    # --------------------------------------------------------------
-    def query(self, question: str, top_k: int = 3, max_tokens: int = 256) -> str:
-        """
-        Run retrieval then generate answer using local LLM.
-        """
-        return self.loader.answer_from_rag(question, max_tokens=max_tokens)
-
-    # --------------------------------------------------------------
-    # INDEX SAVE / LOAD
-    # --------------------------------------------------------------
-    def _save_index(self):
-        """
-        Save FAISS index + document chunks to disk.
-        """
-        if self.loader.index is None:
-            return
-
-        index_path = self.faiss_dir / "index.bin"
-        doc_path = self.faiss_dir / "docs.txt"
-
-        import faiss
-        faiss.write_index(self.loader.index, str(index_path))
-
-        # save docs
-        with open(doc_path, "w", encoding="utf-8") as f:
+        self.index.add(embeddings)
+        # persist
+        idx_path = self.faiss_dir / "index.bin"
+        docs_path = self.faiss_dir / "docs.txt"
+        faiss.write_index(self.index, str(idx_path))
+        with open(docs_path, "w", encoding="utf-8") as f:
             for d in self.documents:
-                f.write(d.replace("\n", " ") + "\n")
+                f.write(d.replace("\n", " ")+"\n")
 
-    def load_index(self):
-        """
-        Reload FAISS index and docs from disk.
-        """
-        index_path = self.faiss_dir / "index.bin"
-        doc_path = self.faiss_dir / "docs.txt"
+    def search(self, query: str, top_k: int = 3):
+        if self.index is None:
+            return []
+        q_vec = self.loader.embed([query]).astype("float32")
+        distances, indices = self.index.search(q_vec, top_k)
+        results = []
+        for idx in indices[0]:
+            if 0 <= idx < len(self.documents):
+                results.append(self.documents[idx])
+        return results
 
-        if not index_path.exists():
-            print("[INFO] FAISS index not found. Starting empty.")
-            return
+    def query(self, question: str, top_k: int = 3, max_tokens: int = 256) -> str:
+        # retrieve
+        chunks = self.search(question, top_k=top_k)
+        context = "\n\n".join(chunks)
+        prompt = f"You are an assistant. Use the context to answer the question.\n\nCONTEXT:\n{context}\n\nQUESTION: {question}\n\nANSWER:"
+        return self.loader.answer_from_rag(prompt, max_tokens=max_tokens)
 
-        import faiss
-        self.loader.index = faiss.read_index(str(index_path))
 
-        if doc_path.exists():
-            with open(doc_path, "r", encoding="utf-8") as f:
-                self.documents = [line.strip() for line in f.readlines()]
-
-# --------------------------------------------------------------
-# HELPER FUNCTIONS (optional)
-# --------------------------------------------------------------
 def create_rag_service(faiss_dir: str = "faiss_index") -> RAGService:
-    """
-    Factory for RAGService with default ModelLoader
-    """
-    loader = ModelLoader(faiss_dir=faiss_dir)
-    service = RAGService(model_loader=loader, faiss_dir=faiss_dir)
-    service.load_index()
-    return service
+    loader = ModelLoader()
+    rs = RAGService(model_loader=loader, faiss_dir=faiss_dir)
+    return rs

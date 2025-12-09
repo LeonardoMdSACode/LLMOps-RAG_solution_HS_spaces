@@ -4,4 +4,6 @@
 model_path: "models/ggml-model-q4_0.bin"   # put downloaded ggml/gguf model here
 embed_model: "sentence-transformers/all-MiniLM-L6-v2"
 faiss_dir: "faiss_index"
+chunk_size: 1000
+chunk_overlap: 200
 runtime: "local"   # options: local, transformers, llama_cpp

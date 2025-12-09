@@ -10,7 +10,12 @@
   </style>
   <script>
     const $ = (sel) => document.querySelector(sel);
-    let sessionId = localStorage.getItem('mdc_session_id') || '';
+
+    /* -------------------- FIX APPLIED HERE -------------------- */
+    /* Always reset session on load to avoid stale/invalid IDs    */
+    localStorage.removeItem('mdc_session_id');
+    let sessionId = '';   // previously pulled from localStorage
+    /* ----------------------------------------------------------- */
 
     async function uploadFiles(evt) {
       evt.preventDefault();
@@ -28,7 +33,10 @@
         if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
         const data = await res.json();
         sessionId = data.session_id;
+
+        /* Save only the fresh session created AFTER indexing */
         localStorage.setItem('mdc_session_id', sessionId);
+
         $('#chat').style.display = 'block';
         toast('Indexing complete. You can chat now.');
       } catch (e) {
@@ -91,14 +99,18 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+
+      /* Chat should NOT auto-open with an old session anymore */
       if (sessionId) {
         $('#chat').style.display = 'block';
       }
+
       $('#upload-form').addEventListener('submit', uploadFiles);
       $('#send-btn').addEventListener('click', sendMessage);
       $('#message-input').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
       });
+
       const drop = $('#dropzone');
       drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('hover'); });
       drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
@@ -145,4 +157,3 @@
   <div id="toast" class="toast"></div>
 </body>
 </html>
-

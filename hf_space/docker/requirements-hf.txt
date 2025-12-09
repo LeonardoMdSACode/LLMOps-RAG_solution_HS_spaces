@@ -1,0 +1,10 @@
+gradio==3.37.0
+sentence-transformers==2.2.2
+numpy
+tqdm
+requests
+PyPDF2
+PyYAML
+# Optional, may require system deps:
+llama-cpp-python==0.1.62
+faiss-cpu
