@@ -29,15 +29,14 @@ jobs:
           sudo apt-get install -y git-lfs
           git lfs install
 
-      - name: Remove large model files from commit (do not push models to HF space)
-        # Prevent accidental pushing of the models dir; do NOT delete local files
+      - name: Remove large model files from commit
         run: |
           git rm -r --cached models || true
           echo "models/" >> .gitignore || true
           git add .gitignore || true
           git commit -m "ci: ignore models (don't push large model artifacts)" || true
 
-      - name: Ensure .gitattributes for images (optional)
+      - name: Ensure .gitattributes for images
         run: |
           git lfs track "images/**" || true
           echo "images/** filter=lfs diff=lfs merge=lfs -text" >> .gitattributes || true
@@ -46,7 +45,6 @@ jobs:
 
       - name: Prepare repository for push
         run: |
-          # Keep repo clean / commit any incidental changes
           git add -A
           git diff --cached --quiet || git commit -m "ci: pre-deploy commit" || echo "no changes"
 
@@ -54,17 +52,16 @@ jobs:
         env:
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE_REPO: ${{ secrets.HF_SPACE_REPO }} # format: username/space-name
+          HF_SPACE_REPO: ${{ secrets.HF_SPACE_REPO }}
         run: |
           if [ -z "$HF_USERNAME" ] || [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_REPO" ]; then
-            echo "ERROR: Set secrets HF_USERNAME, HF_TOKEN and HF_SPACE_REPO in repo settings"
+            echo "ERROR: Missing secrets HF_USERNAME, HF_TOKEN, HF_SPACE_REPO"
             exit 1
           fi
-          # add remote pointing at the Space repo
+
           git remote remove hf-space || true
           git remote add hf-space "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}.git"
-          # push all files (force to ensure sync)
           git push --force hf-space HEAD:main
 
       - name: Done
-        run: echo "Pushed to Hugging Face Space: ${{ secrets.HF_SPACE_REPO }}"
+        run: echo "Pushed to Hugging Face Space"
