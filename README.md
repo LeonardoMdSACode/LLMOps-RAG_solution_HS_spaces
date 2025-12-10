@@ -1,3 +1,18 @@
+---
+title: LLMOps RAG Solution HS Spaces
+emoji: 🚀
+colorFrom: blue
+colorTo: red
+sdk: docker
+pinned: false
+license: mit
+---
+
+# LLMOps RAG Solution – Hugging Face Space
+
+This Space deploys a full RAG application using a Docker container.
+
+
 # MultiDocChat (FastAPI)
 
 ## How it works
