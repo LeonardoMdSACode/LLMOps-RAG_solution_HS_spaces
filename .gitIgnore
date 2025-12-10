@@ -15,11 +15,6 @@ env/
 .vscode/
 .idea/
 
-# LangChain-related
-faiss_index/
-*.faiss
-*.pkl
-
 # Data & archive
 data/
 archive/

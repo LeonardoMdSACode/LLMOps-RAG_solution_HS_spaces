@@ -1,21 +1,25 @@
-FROM python:3.11-slim
+# hf_space/docker/Dockerfile
+FROM python:3.10-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+# System deps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential cmake wget git ffmpeg poppler-utils && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential cmake git libgomp1 libopenblas-dev wget curl unzip poppler-utils \
- && rm -rf /var/lib/apt/lists/*
-
+# Copy only what Space needs (copy entire repo is fine, but keep models excluded by .gitignore)
 COPY . /app
 
-RUN python -m pip install --upgrade pip
-RUN pip install --no-cache-dir -r /app/hf_space/docker/requirements-hf.txt
+# Install python deps (ensure requirements.txt exists and is minimal)
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN mkdir -p /app/models /app/faiss_index
+# Create models directory (container will download models on startup)
+RUN mkdir -p /app/models && mkdir -p /app/faiss_index
 
-COPY hf_space/docker/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
+# HF Spaces expects the app to listen on PORT 7860 (Gradio default). We'll run Uvicorn on 7860.
+ENV PORT=7860
 EXPOSE 7860
-CMD ["/app/start.sh"]
+
+# Entrypoint - start the app (this will run download_models at startup if you kept that call)
+CMD ["python", "hf_space/app.py"]

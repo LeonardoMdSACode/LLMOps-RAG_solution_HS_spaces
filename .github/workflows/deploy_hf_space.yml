@@ -1,59 +1,70 @@
-name: Deploy HF Space (Free-tier LLMOps RAG)
+name: Deploy to Hugging Face Space
 
-# Trigger on push to main branch
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
-    name: Deploy Hugging Face Space
     runs-on: ubuntu-latest
-
     steps:
-      # ------------------------------
-      # 1. Checkout repo
-      # ------------------------------
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      # ------------------------------
-      # 2. Setup Python
-      # ------------------------------
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          python-version: "3.11"
+          fetch-depth: 0
+          lfs: true
 
-      # ------------------------------
-      # 3. Install dependencies
-      # ------------------------------
-      - name: Install dependencies
+      - name: Configure git user
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # ------------------------------
-      # 4. Download free models
-      # ------------------------------
-      - name: Download models
+      - name: Ensure Git LFS is installed
         run: |
-          python scripts/download_models.py
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs install
 
-      # ------------------------------
-      # 5. Optional: Test FastAPI locally
-      # ------------------------------
-      #- name: Run tests
-      #  run: pytest tests/
+      - name: Remove large model files from commit (do not push models to HF space)
+        # Prevent accidental pushing of the models dir; do NOT delete local files
+        run: |
+          git rm -r --cached models || true
+          echo "models/" >> .gitignore || true
+          git add .gitignore || true
+          git commit -m "ci: ignore models (don't push large model artifacts)" || true
 
-      # ------------------------------
-      # 6. Deploy to Hugging Face Space
-      # ------------------------------
-      - name: Deploy to HF Space
-        uses: huggingface/spaces-deploy-action@main
-        with:
-          space-id: LeonardoMdSA/LLMOps-RAG-Free
-          repo-type: space
-          # token with write access (can use secrets.HF_TOKEN)
-          hf-token: ${{ secrets.HF_TOKEN }}
+      - name: Ensure .gitattributes for images (optional)
+        run: |
+          git lfs track "images/**" || true
+          echo "images/** filter=lfs diff=lfs merge=lfs -text" >> .gitattributes || true
+          git add .gitattributes || true
+          git commit -m "ci: add gitattributes" || true
+
+      - name: Prepare repository for push
+        run: |
+          # Keep repo clean / commit any incidental changes
+          git add -A
+          git diff --cached --quiet || git commit -m "ci: pre-deploy commit" || echo "no changes"
+
+      - name: Push to Hugging Face Space (via HTTPS)
+        env:
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_REPO: ${{ secrets.HF_SPACE_REPO }} # format: username/space-name
+        run: |
+          if [ -z "$HF_USERNAME" ] || [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_REPO" ]; then
+            echo "ERROR: Set secrets HF_USERNAME, HF_TOKEN and HF_SPACE_REPO in repo settings"
+            exit 1
+          fi
+          # add remote pointing at the Space repo
+          git remote remove hf-space || true
+          git remote add hf-space "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}.git"
+          # push all files (force to ensure sync)
+          git push --force hf-space HEAD:main
+
+      - name: Done
+        run: echo "Pushed to Hugging Face Space: ${{ secrets.HF_SPACE_REPO }}"
