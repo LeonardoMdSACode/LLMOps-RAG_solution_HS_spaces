@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-sentence-transformers
+sentence-transformers==2.2.2
 numpy
 tqdm
 requests
@@ -10,3 +10,5 @@ faiss-cpu
 llama-cpp-python==0.2.74
 pytest
 python-multipart
+transformers
+torch>=2.1.0
