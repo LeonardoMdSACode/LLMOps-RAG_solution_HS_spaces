@@ -50,7 +50,7 @@ else:
     logger.warning("Embedding model not loaded")
 
 # --- FastAPI app ---
-app = FastAPI(title="MultiDocChat", version="0.1.0")
+app = FastAPI(title="RAG Solution", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

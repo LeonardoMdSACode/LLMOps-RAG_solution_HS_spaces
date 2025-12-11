@@ -1,44 +1,44 @@
-import pathlib
 import pytest
-from langchain.schema import Document
+from multi_doc_chat.rag_service import create_rag_service
+from multi_doc_chat.src.document_ingestion import data_ingestion as di
+from io import BytesIO
+import asyncio
+from unittest.mock import MagicMock
+import numpy as np
 
-from multi_doc_chat.src.document_ingestion.data_ingestion import (
-    generate_session_id,
-    ChatIngestor,
-    FaissManager,
-)
+class DummyUploadFile:
+    def __init__(self, name, content):
+        self.filename = name
+        self.file = BytesIO(content.encode("utf-8"))
+        self._content = content.encode("utf-8")
+    def read(self):
+        return self._content
 
+# Patch async file reading
+import multi_doc_chat.utils.document_ops as doc_ops
+async def async_read_text_fileobj(fileobj):
+    return await asyncio.to_thread(doc_ops.read_text_fileobj, fileobj)
+di.read_text_fileobj = async_read_text_fileobj
 
-def test_generate_session_id_format_and_uniqueness():
-    a = generate_session_id()
-    b = generate_session_id()
-    assert a != b
-    assert a.startswith("session_") and b.startswith("session_")
-    # Rough pattern check: session_YYYYMMDD_HHMMSS_XXXXXXXX -> 4 parts
-    assert len(a.split("_")) == 4
+class FakeEmbedder:
+    def encode(self, texts, show_progress_bar=False):
+        return np.zeros((len(texts), 768), dtype="float32")
 
+@pytest.mark.asyncio
+async def test_ingest_txt_file():
+    rag_service = create_rag_service(faiss_dir="tests/faiss_test_index")
 
-def test_chat_ingestor_resolve_dir_uses_session_dirs(tmp_dirs, stub_model_loader):
-    ing = ChatIngestor(temp_base="data", faiss_base="faiss_index", use_session_dirs=True)
-    assert ing.session_id
-    assert str(ing.temp_dir).endswith(ing.session_id)
-    assert str(ing.faiss_dir).endswith(ing.session_id)
+    # patch embedder
+    rag_service.loader.embedder = FakeEmbedder()
 
+    # patch FAISS completely
+    rag_service.index = MagicMock()
+    rag_service.index.add = MagicMock()
+    
+    txt_file = DummyUploadFile("example.txt", "Hello world! This is a test.")
 
-def test_split_chunks_respect_size_and_overlap(tmp_dirs, stub_model_loader):
-    ing = ChatIngestor(temp_base="data", faiss_base="faiss_index", use_session_dirs=True)
-    docs = [Document(page_content="A" * 1200, metadata={"source": "x.txt"})]
-    chunks = ing._split(docs, chunk_size=500, chunk_overlap=100)
-    assert len(chunks) >= 2
-    # spot check boundaries
-    assert len(chunks[0].page_content) <= 500
+    session_id = await di.ingest_upload_files([txt_file], rag_service)
 
-
-def test_faiss_manager_add_documents_idempotent(tmp_dirs, stub_model_loader):
-    fm = FaissManager(index_dir=pathlib.Path("faiss_index/test"))
-    fm.load_or_create(texts=["hello", "world"], metadatas=[{"source": "a"}, {"source": "b"}])
-    docs = [Document(page_content="hello", metadata={"source": "a"})]
-    first = fm.add_documents(docs)
-    second = fm.add_documents(docs)
-    assert first >= 0
-    assert second == 0
+    assert session_id == "default"
+    assert len(rag_service.documents) > 0
+    assert any("Hello world" in chunk for chunk in rag_service.documents)

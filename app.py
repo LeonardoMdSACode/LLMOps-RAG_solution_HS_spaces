@@ -50,7 +50,7 @@ else:
     logger.warning("Embedding model not loaded")
 
 # --- FastAPI app ---
-app = FastAPI(title="MultiDocChat", version="0.1.0")
+app = FastAPI(title="RAG Solution", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -154,5 +154,5 @@ def list_sessions():
 # --- Run server ---
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", "7860"))
+    port = int(os.getenv("PORT"))
     uvicorn.run("app:app", host="0.0.0.0", port=port)

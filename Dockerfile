@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy only what HF Space needs (exclude localhost folder)
+# Copy only what HF Space needs
 COPY multi_doc_chat ./multi_doc_chat
 COPY templates ./templates
 COPY static ./static
@@ -22,9 +22,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create folders for models/index
 RUN mkdir -p /app/models /app/faiss_index
 
-# HF Spaces port
-ENV PORT=7860
-EXPOSE 7860
+# HuggingFace Spaces provides PORT automatically
+ENV PORT=$PORT
 
 # Entrypoint
 CMD ["python", "app.py"]
