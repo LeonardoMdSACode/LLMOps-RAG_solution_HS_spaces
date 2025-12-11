@@ -1,6 +1,5 @@
 fastapi
 uvicorn[standard]
-gradio
 sentence-transformers
 PyPDF2
 numpy
@@ -9,3 +8,5 @@ requests
 tqdm
 faiss-cpu
 llama-cpp-python
+pytest
+python-multipart

@@ -19,7 +19,7 @@ def test_upload_no_files_validation_error(client, clear_sessions, stub_ingestor)
 
 def test_upload_ingestor_failure_returns_500(client, clear_sessions, monkeypatch, tmp_dirs):
     import multi_doc_chat.src.document_ingestion.data_ingestion as di
-    import main
+    import localhost.main as main
 
     class Boom:
         def __init__(self, *a, **k):

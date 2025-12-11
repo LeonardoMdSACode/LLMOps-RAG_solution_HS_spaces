@@ -10,7 +10,7 @@ def test_chat_invalid_session_returns_400(client, clear_sessions, stub_rag):
 
 def test_chat_empty_message_returns_400(client, clear_sessions, stub_rag):
     sid = "sess_test"
-    import main
+    import localhost.main as main
     main.SESSIONS[sid] = []
     body = {"session_id": sid, "message": "   "}
     resp = client.post("/chat", json=body)
@@ -20,7 +20,7 @@ def test_chat_empty_message_returns_400(client, clear_sessions, stub_rag):
 
 def test_chat_success_returns_answer_and_appends_history(client, clear_sessions, stub_rag):
     sid = "sess_test"
-    import main
+    import localhost.main as main
     main.SESSIONS[sid] = []
     body = {"session_id": sid, "message": "Hello"}
     resp = client.post("/chat", json=body)
@@ -31,10 +31,10 @@ def test_chat_success_returns_answer_and_appends_history(client, clear_sessions,
 
 def test_chat_failure_returns_500(client, clear_sessions, monkeypatch):
     sid = "sess_test"
-    import main
+    import localhost.main as main
     main.SESSIONS[sid] = []
 
-    import main
+    import localhost.main as main
 
     class BoomRAG:
         def __init__(self, session_id=None):

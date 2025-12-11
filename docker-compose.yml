@@ -1,11 +1,14 @@
 services:
   rag-app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: .    
+      dockerfile: localhost/Dockerfile  
     container_name: rag-app
     ports:
       - "8000:8000"
+    environment:
+      PYTHONPATH: /app
     volumes:
       - ./faiss_index:/app/faiss_index
       - ./models:/app/models
+

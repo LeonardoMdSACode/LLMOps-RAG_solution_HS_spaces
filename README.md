@@ -1,6 +1,6 @@
 ---
 title: LLMOps RAG Solution HS Spaces
-emoji: 🚀
+emoji: 🧠
 colorFrom: blue
 colorTo: red
 sdk: docker

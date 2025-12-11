@@ -5,7 +5,6 @@ RAG service using ModelLoader, FAISS, and local embeddings.
 
 from pathlib import Path
 from typing import List, Optional
-import numpy as np
 import yaml
 
 from .model_loader import ModelLoader
@@ -15,17 +14,22 @@ try:
 except Exception:
     faiss = None
 
+# --- ROOT paths for FAISS and models ---
+ROOT_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_FAISS_DIR = ROOT_DIR / "faiss_index"
+MODELS_DIR = ROOT_DIR / "models"
+
 # load config
-CFG_PATH = Path(__file__).resolve().parent.parent / "configs" / "default.yaml"
+CFG_PATH = ROOT_DIR / "configs" / "default.yaml"
 if CFG_PATH.exists():
     with open(CFG_PATH, "r") as f:
         _CFG = yaml.safe_load(f)
 else:
-    _CFG = {"faiss_dir": "faiss_index"}
+    _CFG = {"faiss_dir": str(DEFAULT_FAISS_DIR)}
 
 class RAGService:
     def __init__(self, model_loader: Optional[ModelLoader] = None, faiss_dir: Optional[str] = None):
-        cfg_faiss = faiss_dir or _CFG.get("faiss_dir", "faiss_index")
+        cfg_faiss = faiss_dir or _CFG.get("faiss_dir", str(DEFAULT_FAISS_DIR))
         self.faiss_dir = Path(cfg_faiss)
         self.faiss_dir.mkdir(parents=True, exist_ok=True)
         self.loader = model_loader or ModelLoader(faiss_dir=str(self.faiss_dir))
@@ -47,7 +51,6 @@ class RAGService:
         if not texts:
             return
         # extend docs
-        start_index = len(self.documents)
         self.documents.extend(texts)
 
         if self.loader.embedder is None:
@@ -89,7 +92,7 @@ class RAGService:
         return self.loader.answer_from_rag(prompt, max_tokens=max_tokens)
 
 
-def create_rag_service(faiss_dir: str = "faiss_index") -> RAGService:
+def create_rag_service(faiss_dir: str = str(DEFAULT_FAISS_DIR)) -> RAGService:
     loader = ModelLoader()
     rs = RAGService(model_loader=loader, faiss_dir=faiss_dir)
     return rs
