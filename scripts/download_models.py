@@ -7,9 +7,9 @@ MODELS_DIR.mkdir(exist_ok=True)
 
 MODEL_LIST = [
     {
-        "name": "qwen2.5-1.5b-instruct-q4_0",
-        "filename": "qwen2.5-1.5b-instruct-q4_0.gguf",
-        "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_0.gguf"
+        "name": "qwen2.5-0.5b-instruct-q4_0",
+        "filename": "qwen2.5-0.5b-instruct-q4_0.gguf",
+        "url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_0.gguf"
     }
 ]
 
@@ -22,7 +22,7 @@ def download_file(url: str, dest: Path):
         raise ValueError(f"URL returned HTML, not a model file: {url}")
     total = int(resp.headers.get("content-length", 0))
     with open(dest, "wb") as f, tqdm(total=total, unit="B", unit_scale=True, desc=dest.name) as bar:
-        for chunk in resp.iter_content(chunk_size=1024*1024):
+        for chunk in resp.iter_content(chunk_size=1024 * 1024):
             if chunk:
                 f.write(chunk)
                 bar.update(len(chunk))

@@ -1,8 +1,3 @@
-"""
-multi_doc_chat/model_loader.py
-LLM + embedder loader (local only)
-"""
-
 from pathlib import Path
 from typing import List, Optional
 import yaml
@@ -19,14 +14,14 @@ except Exception:
     SentenceTransformer = None
 
 
-# load default config
+# Load config
 CFG_PATH = Path(__file__).resolve().parent.parent.parent / "configs" / "default.yaml"
 if CFG_PATH.exists():
     with open(CFG_PATH, "r") as f:
         _CFG = yaml.safe_load(f)
 else:
     _CFG = {
-        "model_path": "models/qwen2.5-1.5b-instruct-q4_0.gguf",
+        "model_path": "models/qwen2.5-0.5b-instruct-q4_0.gguf",
         "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
         "faiss_dir": "faiss_index",
         "chunk_size": 1000,
@@ -40,7 +35,7 @@ class ModelLoader:
         model_path: Optional[str] = None,
         embed_model_name: Optional[str] = None,
         faiss_dir: Optional[str] = None,
-        n_ctx: int = 4096,
+        n_ctx: int = 2048,  # 0.5B models cannot handle 4k context well
     ):
         self.model_path = Path(model_path or _CFG.get("model_path"))
         self.embed_model_name = embed_model_name or _CFG.get("embed_model")
@@ -94,7 +89,6 @@ class ModelLoader:
         if not self.llm:
             return "[Local LLM missing — place a .gguf model inside models/]"
 
-        # CORRECT llama-cpp-python call
         out = self.llm(
             prompt,
             max_tokens=max_tokens,
@@ -109,5 +103,4 @@ class ModelLoader:
             return str(out)
 
     def answer_from_rag(self, query: str, max_tokens: int = 256) -> str:
-        # Currently just fallback; your RAGService inserts context
         return self.chat(query, max_tokens=max_tokens)
