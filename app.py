@@ -154,5 +154,6 @@ def list_sessions():
 # --- Run server ---
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT"))
+    port_raw = os.getenv("PORT", "7860")
+    port = int(port_raw) if port_raw.strip() else 7860
     uvicorn.run("app:app", host="0.0.0.0", port=port)
