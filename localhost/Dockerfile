@@ -8,7 +8,6 @@ COPY multi_doc_chat ./multi_doc_chat
 COPY templates ./templates
 COPY static ./static
 COPY scripts ./scripts
-COPY configs ./configs
 COPY models ./models
 COPY faiss_index ./faiss_index
 
