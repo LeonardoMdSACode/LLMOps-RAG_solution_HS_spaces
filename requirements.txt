@@ -11,4 +11,5 @@ llama-cpp-python==0.2.74
 pytest
 python-multipart
 transformers
-torch>=2.1.0
+torch
+huggingface-hub==0.16.4
