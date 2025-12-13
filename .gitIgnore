@@ -9,6 +9,7 @@ env/
 *.egg-info/
 *.egg
 *.log
+.pytest_cache/
 
 # OS & editor files
 .DS_Store

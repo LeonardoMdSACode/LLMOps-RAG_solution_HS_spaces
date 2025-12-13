@@ -1,6 +1,10 @@
 from pathlib import Path
 import requests
 from tqdm import tqdm
+from sentence_transformers import SentenceTransformer
+SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+
 
 MODELS_DIR = Path("models")
 MODELS_DIR.mkdir(exist_ok=True)

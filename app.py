@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 from multi_doc_chat.src.document_ingestion.data_ingestion import ingest_upload_files
 from multi_doc_chat.rag_service import create_rag_service
+from sentence_transformers import SentenceTransformer
 
 # --- Configure logging ---
 logging.basicConfig(
@@ -41,6 +42,10 @@ MODELS_DIR = ROOT_DIR / "models"
 # --- Create RAGService ---
 rag_service = create_rag_service(faiss_dir=str(FAISS_DIR))
 
+# After creating rag_service
+if rag_service.loader.embedder is None:
+    rag_service.loader.embedder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    
 # --- Startup logging ---
 logger.info("RAGService initialized at %s", FAISS_DIR)
 logger.info("Number of documents in FAISS index: %d", len(rag_service.documents))
