@@ -13,8 +13,8 @@ license: mit
 
 This repository supports **two parallel execution modes** for the same application:
 
-1. **Local development via Docker Compose (localhost)**
-2. **Production-style deployment on Hugging Face Spaces (Docker Space)**
+1. **Local development via Docker Compose (http://localhost:8000/)**
+2. **Production-style deployment on Hugging Face Spaces (https://huggingface.co/spaces/LeonardoMdSA/LLMOps-RAG_solution-HS_spaces)**
 
 Both modes run the application inside containers, but they are intentionally **separated** to avoid coupling local tooling with Hugging Face constraints.
 
