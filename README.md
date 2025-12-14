@@ -1,3 +1,4 @@
+---
 title: LLMOps RAG Solution HS Spaces
 emoji: 🧠
 colorFrom: blue
@@ -6,6 +7,7 @@ sdk: docker
 app_file: Dockerfile
 pinned: false
 license: mit
+---
 
 # Multi-Document Chat (LLMOps / RAG)
 
