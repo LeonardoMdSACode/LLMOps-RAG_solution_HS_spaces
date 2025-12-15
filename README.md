@@ -98,19 +98,6 @@ No local-only files are required or read.
 
 ---
 
-## README.md and HF Spaces
-
-* The `README.md` **does not affect runtime execution**
-* It can be freely edited
-* It is used only for:
-
-  * Documentation
-  * HF Spaces UI metadata (title, description, emoji)
-
-You may add, remove, or restructure this README at any time without breaking deployment.
-
----
-
 ## Important Notes
 
 * Keep **HF-specific files at repository root**
