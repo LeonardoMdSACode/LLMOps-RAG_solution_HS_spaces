@@ -98,17 +98,6 @@ No local-only files are required or read.
 
 ---
 
-## Important Notes
-
-* Keep **HF-specific files at repository root**
-* Keep **local-only tooling inside `localhost/`**
-* Do not move `app.py` or root `Dockerfile`
-* Do not introduce `docker-compose.yml` at root
-
-This separation is intentional and correct.
-
----
-
 ## Testing
 
 This repository includes a dedicated `tests/` folder for automated testing.
@@ -143,6 +132,128 @@ python -m pytest
 ```
 
 Tests are intended to be executed **locally or in CI**. They are not required for Hugging Face Spaces runtime execution and are not invoked during HF builds unless you explicitly add them to the Dockerfile.
+
+---
+
+## Technology Stack
+
+This project implements a production-style **Retrieval-Augmented Generation (RAG)** system using a fully custom pipeline (no LangChain).
+
+---
+
+### Language & Runtime
+- **Python 3.13**
+  - Local development
+  - Hugging Face Spaces runtime compatibility
+
+---
+
+### API & Web Server
+- **FastAPI**
+  - REST API for document upload and chat
+  - Async request handling
+- **Uvicorn**
+  - ASGI server
+  - Configured for port `7860` (HF Spaces requirement)
+
+---
+
+### Frontend
+- **HTML / CSS**
+- **Jinja2 Templates**
+- **FastAPI StaticFiles**
+- No Streamlit
+- No JavaScript framework (React/Vue)
+
+---
+
+### Retrieval-Augmented Generation (RAG)
+
+#### Embeddings
+- **sentence-transformers**
+  - Model: `sentence-transformers/all-MiniLM-L6-v2`
+  - Used exclusively for document embeddings
+  - Loaded at application startup
+
+#### Vector Store
+- **FAISS**
+  - In-memory vector index with filesystem persistence
+  - Index directory: `faiss_index/`
+  - Ephemeral on Hugging Face Spaces (resets when container sleeps)
+
+#### Retrieval Logic
+- Fully custom implementation
+- Manual chunking, embedding, indexing, and similarity search
+- No LangChain or LlamaIndex
+
+---
+
+### Large Language Model (LLM)
+
+- **GGUF-format local LLM**
+  - Example: `Qwen2.5-0.5B-Instruct (Q4_0)`
+- **llama.cpp-compatible runtime**
+- Models downloaded at startup into `models/`
+- Used for generation only (not embeddings)
+
+---
+
+### Document Ingestion
+
+- **Supported formats**
+  - `.txt`
+  - `.pdf`
+- **Libraries**
+  - `PyPDF2` (functional; noted as deprecated)
+- Async ingestion pipeline
+- Chunking and embedding performed during upload
+
+---
+
+### Deployment
+- **Hugging Face Spaces (Docker-based)**
+  - Stateless container
+  - No persistent volume
+  - FAISS index and uploaded documents reset when container sleeps
+- Local Docker-compatible structure
+
+---
+
+### Testing
+- **pytest**
+- **pytest-asyncio**
+- Unit tests
+- Integration tests
+- External dependencies (FAISS, embedder) mocked where required
+
+---
+
+### Utilities & Tooling
+- **requests** – model downloads
+- **tqdm** – download progress visualization
+- **logging (stdlib)** – centralized logging in `app.py`
+- **threading / uuid** – session and state management
+
+---
+
+### Explicitly Not Used
+- LangChain
+- LlamaIndex
+- Streamlit
+- Cloud-hosted LLM APIs
+- Managed vector databases (Pinecone, Weaviate, etc.)
+- Persistent storage
+
+---
+
+## Important Notes
+
+* Keep **HF-specific files at repository root**
+* Keep **local-only tooling inside `localhost/`**
+* Do not move `app.py` or root `Dockerfile`
+* Do not introduce `docker-compose.yml` at root
+
+This separation is intentional and correct.
 
 ---
 
