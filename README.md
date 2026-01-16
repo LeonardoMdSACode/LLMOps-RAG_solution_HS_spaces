@@ -9,7 +9,7 @@ pinned: false
 license: mit
 ---
 
-# Multi-Document Chat (LLMOps / RAG)
+# LLMOps / RAG Solution
 
 This repository supports **two parallel execution modes** for the same application:
 
@@ -23,18 +23,76 @@ Both modes run the application inside containers, but they are intentionally **s
 ## Repository Structure
 
 ```text
-.
-├── localhost/
-│   ├── docker-compose.yml
-│   ├── Dockerfile
-│   └── ... (local-only configs, volumes, helpers)
-│
-├── app.py                # HF Spaces entrypoint
-├── Dockerfile            # HF Spaces Docker image
-├── requirements.txt
-├── README.md
+LLMOps-RAG_solution_HS_spaces/
+├── app.py
+│   # Main FastAPI application entrypoint.
+├── docker-compose.yml
+│   # Optional local orchestration file.
+├── Dockerfile
+│   # Production container definition used by Hugging Face Spaces.
 ├── LICENSE
-└── ... (shared application code)
+│   # Repository license file.
+├── pytest.ini
+│   # Pytest configuration.
+├── README.md
+│   # Project documentation.
+├── requirements.txt
+│   # Python runtime dependencies.
+├── faiss_index/
+│   # Runtime-generated FAISS vector index directory.
+├── localhost/
+│   ├── Dockerfile
+│   │   # Alternative lightweight Dockerfile for local-only usage.
+│   │   # Decoupled from Hugging Face Spaces constraints.
+│   ├── main.py
+│   │   # Local development entrypoint.
+│   ├── pyproject.toml
+│   │   # Local Python project configuration.
+│   └── requirements.txt
+│       # Local-only dependency set
+├── models/
+│   └── qwen2.5-0.5b-instruct-q4_0.gguf
+│       # Quantized local LLM model file.
+├── multi_doc_chat/
+│   ├── model_loader.py
+│   │   # Responsible for loading the local LLM model.
+│   ├── rag_service.py
+│   │   # Core RAG orchestration layer.
+│   ├── src/
+│   │    └── document_ingestion/
+│   │       ├── __init__.py
+│   │       │   # Marks ingestion as a Python module.
+│   │       └── data_ingestion.py
+│   │           # Document ingestion pipeline.
+│   └── utils/
+│         ├── __init__.py
+│         │   # Utility module marker.
+│         │
+│         └── document_ops.py
+│             # Low-level document utilities.
+├── scripts/
+│   └── download_models.py
+│       # Bootstrap script for model availability.
+├── static/
+│   └── styles.css
+│       # Frontend styling for the web UI.
+├── templates/
+│   └── index.html
+│       # Static HTML frontend.
+└── tests/
+    ├── __init__.py
+    │   # Test package marker.
+    │
+    ├── run_evaluations.py
+    │   # Manual or scripted evaluation runner.
+    │
+    ├── integration/
+    │   └── test_rag_service_flow.py
+    │       # End-to-end integration tests.
+    │
+    └── unit/
+        └── test_data_ingestion.py
+            # Unit tests for the ingestion layer.
 ```
 
 ### Key Design Decision
@@ -122,7 +180,7 @@ Tests are written using **pytest** and are designed to validate:
 From the repository root:
 
 ```bash
-pytest
+pytest -v
 ```
 
 Or explicitly:
@@ -257,6 +315,57 @@ This separation is intentional and correct.
 
 ---
 
-## License
+## References / Documentation
+
+- **FastAPI**  
+  https://fastapi.tiangolo.com/  
+  API framework.
+
+- **Uvicorn**  
+  https://www.uvicorn.org/  
+  ASGI server.
+
+- **FAISS**  
+  https://github.com/facebookresearch/faiss  
+  Vector similarity search and indexing.
+
+- **Sentence-Transformers**  
+  https://www.sbert.net/  
+  Document embedding generation.
+
+- **Qwen 2.5 (GGUF, quantized)**  
+  https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF  
+  Local LLM for answer generation.
+
+- **Hugging Face Spaces**  
+  https://huggingface.co/docs/spaces/index  
+  Deployment platform (Docker-based, ephemeral storage).
+
+- **Docker**  
+  https://docs.docker.com/  
+  Containerization.
+
+- **Pytest**  
+  https://docs.pytest.org/  
+  Testing framework.
+
+- **Pydantic**  
+  https://docs.pydantic.dev/  
+  Request/response validation.
+
+- **Retrieval-Augmented Generation (RAG)**  
+  https://arxiv.org/abs/2005.11401  
+  System architecture pattern.
+
+---
+
+## Contact / Author
+
+* Hugging Face: [https://huggingface.co/LeonardoMdSA](https://huggingface.co/LeonardoMdSA)
+* GitHub: [https://github.com/LeonardoMdSACode](https://github.com/LeonardoMdSACode)
+
+---
+
+## MIT License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
