@@ -4,18 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RAG Solution</title>
-  <link rel="stylesheet" href="/static/styles.css" />
-  <style>
-    /* Minimal inline tweaks; most styles live in styles.css */
-  </style>
+ <link rel="stylesheet" href="/static/styles.css?v=1.0.1" id="main-css"/>
+ <script>
+   const css = document.getElementById('main-css');
+   css.href = `/static/styles.css?v=${Date.now()}`;
+ </script>
   <script>
     const $ = (sel) => document.querySelector(sel);
 
-    /* -------------------- FIX APPLIED HERE -------------------- */
-    /* Always reset session on load to avoid stale/invalid IDs    */
     localStorage.removeItem('mdc_session_id');
-    let sessionId = '';   // previously pulled from localStorage
-    /* ----------------------------------------------------------- */
+    let sessionId = '';
 
     async function uploadFiles(evt) {
       evt.preventDefault();
@@ -33,10 +31,7 @@
         if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
         const data = await res.json();
         sessionId = data.session_id;
-
-        /* Save only the fresh session created AFTER indexing */
         localStorage.setItem('mdc_session_id', sessionId);
-
         $('#chat').style.display = 'block';
         toast('Indexing complete. You can chat now.');
       } catch (e) {
@@ -99,17 +94,9 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-
-      /* Chat should NOT auto-open with an old session anymore */
-      if (sessionId) {
-        $('#chat').style.display = 'block';
-      }
-
+      $('#choose-files-btn').addEventListener('click', () => $('#file-input').click());
       $('#upload-form').addEventListener('submit', uploadFiles);
       $('#send-btn').addEventListener('click', sendMessage);
-      $('#message-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-      });
 
       const drop = $('#dropzone');
       drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('hover'); });
@@ -121,37 +108,46 @@
       });
     });
   </script>
-  <meta name="color-scheme" content="light dark" />
 </head>
+
 <body>
   <header>
     <h1>RAG Solution</h1>
   </header>
 
-  <main>
-    <section id="uploader">
+  <main class="container">
+
+    <div class="card">
+      <h2>Document Ingestion (pdf or txt)</h2>
       <form id="upload-form">
         <div id="dropzone">
           <p>Drag and drop files here</p>
           <p>or</p>
-          <label class="btn">
+          <button type="button" class="btn" id="choose-files-btn">
             Choose files
-            <input id="file-input" type="file" name="files" multiple hidden />
-          </label>
+          </button>
+          <input id="file-input" type="file" name="files" multiple hidden />
         </div>
-        <button id="upload-btn" style="background-color: rgb(0, 94, 225); color: white; border-radius: 6px; cursor: pointer;" type="submit">Upload & Index</button>
+        <p class="hint">After choosing files, click <strong>Upload &amp; Index</strong></p>
+        <button id="upload-btn" class="primary" type="submit">Upload & Index</button>
         <span id="indexing" class="hint" style="display:none;">Indexing…</span>
       </form>
-    </section>
+    </div>
 
-    <section id="chat" style="display:none;">
+    <div class="card" id="chat" style="display:none;">
+      <h2>Chat</h2>
       <div id="messages" class="messages"></div>
       <div class="composer">
         <textarea id="message-input" rows="2" placeholder="Ask about your documents…"></textarea>
-        <button id="send-btn" style="background-color: rgb(0, 94, 225); color: white; border-radius: 6px; cursor: pointer;">Send</button>
+        <button id="send-btn" class="secondary">Send</button>
         <span id="thinking" class="hint" style="display:none;">Thinking…</span>
       </div>
-    </section>
+    </div>
+
+    <div class="footer">
+      Built with FastAPI · FAISS · SentenceTransformers · GGUF · Hugging Face Spaces Friendly
+    </div>
+
   </main>
 
   <div id="toast" class="toast"></div>

@@ -127,6 +127,8 @@ docker-compose up --build
 
 This mode is **not** used by Hugging Face Spaces and is ignored during HF deployment.
 
+Localhost: http://127.0.0.1:8000/
+
 ---
 
 ## Hugging Face Spaces Deployment (Docker)
